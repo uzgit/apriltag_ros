@@ -32,6 +32,9 @@
 #include "apriltag_ros/common_functions.h"
 #include "image_geometry/pinhole_camera_model.h"
 
+#include <tf2/LinearMath/Transform.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+
 #include "common/homography.h"
 #include "tagStandard52h13.h"
 #include "tagStandard41h12.h"
@@ -206,6 +209,27 @@ TagDetector::~TagDetector() {
   }
 }
 
+geometry_msgs::Point get_camera_translation( const geometry_msgs::Pose & marker_pose )
+{
+	// the pose of the camera within the marker's coordinate frame
+	geometry_msgs::Pose camera_pose;
+
+	// get the marker's orientation and invert it
+	tf2::Quaternion marker_orientation, marker_orientation_inverse;
+	tf2::fromMsg(marker_pose.orientation, marker_orientation);
+	marker_orientation_inverse = marker_orientation.inverse();
+
+	// create a rotational transform with the inverse of the marker's orientation (no translational element)
+	geometry_msgs::TransformStamped rotation_transform;
+	rotation_transform.transform.rotation = tf2::toMsg(marker_orientation_inverse);
+
+	// carry out the rotation
+	tf2::doTransform(marker_pose, camera_pose, rotation_transform);
+
+	// return only the translational elements of the camera's pose, as the orientation will be (w, x, y, z) ≈ (1, 0, 0, 0)
+	return camera_pose.position;
+}
+
 AprilTagDetectionArray TagDetector::detectTags (
     const cv_bridge::CvImagePtr& image,
     const sensor_msgs::CameraInfoConstPtr& camera_info) {
@@ -233,6 +257,10 @@ AprilTagDetectionArray TagDetector::detectTags (
   double fy = camera_model.fy(); // focal length in camera y-direction [px]
   double cx = camera_model.cx(); // optical center x-coordinate [px]
   double cy = camera_model.cy(); // optical center y-coordinate [px]
+
+  cv::Size camera_resolution = camera_model.fullResolution();
+  double half_resolution_x = camera_resolution.width / 2;
+  double half_resolution_y = camera_resolution.height / 2;
 
   // Run AprilTag 2 algorithm on the image
   if (detections_)
@@ -346,6 +374,31 @@ AprilTagDetectionArray TagDetector::detectTags (
     tag_detection.pose = tag_pose;
     tag_detection.id.push_back(detection->id);
     tag_detection.size.push_back(tag_size);
+
+    double tag_c[2];
+    tag_c[0] = 0;
+    tag_c[1] = 0;
+    for(int i = 0; i < 4; i ++)
+    {
+	    tag_c[0] += standaloneTagImagePoints[i].x;
+	    tag_c[1] += standaloneTagImagePoints[i].y;
+    }
+    tag_c[0] /= 4;
+    tag_c[1] /= 4;
+    tag_detection.c.push_back(tag_c[0]);
+    tag_detection.c.push_back(tag_c[1]);
+
+    double tag_c_normalized[2];
+    tag_c_normalized[0] = (tag_c[0] - half_resolution_x) / half_resolution_x;
+    tag_c_normalized[1] = (tag_c[1] - half_resolution_y) / half_resolution_y;
+
+    tag_detection.c_normalized.push_back(tag_c_normalized[0]);
+    tag_detection.c_normalized.push_back(tag_c_normalized[1]);
+
+    tag_detection.name=standaloneDescription->frame_name();
+
+    tag_detection.camera_translation = get_camera_translation( tag_pose.pose.pose );
+
     tag_detection_array.detections.push_back(tag_detection);
     detection_names.push_back(standaloneDescription->frame_name());
   }
@@ -359,9 +412,8 @@ AprilTagDetectionArray TagDetector::detectTags (
     // Get bundle name
     std::string bundleName = tag_bundle_descriptions_[j].name();
 
-    std::map<std::string,
-             std::vector<cv::Point3d> >::iterator it =
-        bundleObjectPoints.find(bundleName);
+    std::map<std::string, std::vector<cv::Point3d> >::iterator it = bundleObjectPoints.find(bundleName);
+
     if (it != bundleObjectPoints.end())
     {
       // Some member tags of this bundle were detected, get the bundle's
@@ -382,6 +434,51 @@ AprilTagDetectionArray TagDetector::detectTags (
       tag_detection.pose = bundle_pose;
       tag_detection.id = bundle.bundleIds();
       tag_detection.size = bundle.bundleSizes();
+
+
+      tag_detection.name = bundle.name();
+
+      tag_detection.c.clear();
+      tag_detection.c_normalized.clear();
+
+      int min_id = -1;
+      double bundle_c[2];
+      double bundle_c_normalized[2];
+
+      for( const AprilTagDetection& previous_detection : tag_detection_array.detections )
+      {
+	      int ii = 0;
+	      // try to find the pixel positions of the tags in the marker
+	      //     if there are still markers          if we find a matching id                                             if there is more than 1 id in the detection
+	      while( ii < (tag_detection.id.size()) && (tag_detection.id[ii] != previous_detection.id[0]) || previous_detection.id.size() > 1 )
+	      {
+		      ii ++;
+	      }
+
+	      if( ii < tag_detection.id.size() )
+	      {
+		      if( previous_detection.id[0] < min_id || min_id == -1 )
+		      {
+			      min_id = previous_detection.id[0];
+
+			      bundle_c[0] = previous_detection.c[0];
+			      bundle_c[1] = previous_detection.c[1];
+			      
+			      bundle_c_normalized[0] = previous_detection.c_normalized[0];
+			      bundle_c_normalized[1] = previous_detection.c_normalized[1];
+		      }
+	      }
+	      
+      }
+
+      tag_detection.c.push_back(bundle_c[0]);
+      tag_detection.c.push_back(bundle_c[1]);
+      
+      tag_detection.c_normalized.push_back(bundle_c_normalized[0]);
+      tag_detection.c_normalized.push_back(bundle_c_normalized[1]);
+
+      tag_detection.camera_translation = get_camera_translation( bundle_pose.pose.pose );
+
       tag_detection_array.detections.push_back(tag_detection);
       detection_names.push_back(bundle.name());
     }
