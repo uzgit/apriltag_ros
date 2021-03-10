@@ -19,6 +19,8 @@
 #   ]
 standalone_tags:
   [
+    {id: 0, size: 0.10, name: INNER},
+    {id: 1, size: 0.50, name: OUTER}
   ]
 # ## Tag bundle definitions
 # ### Remarks
@@ -43,4 +45,12 @@ standalone_tags:
 #   ]
 tag_bundles:
   [
+     {
+       name: 'landing_pad',
+       layout:
+         [
+           {id: 0, size: 0.1, x:  0.00, y:  0.00, z: 0.00, qw: 1.00, qx: 0.00, qy: 0.00, qz: 0.00},
+           {id: 1, size: 0.5, x:  0.00, y:  0.00, z: 0.00, qw: 1.00, qx: 0.00, qy: 0.00, qz: 0.00}
+         ]
+     },
   ]
