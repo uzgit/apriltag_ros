@@ -226,6 +226,32 @@ geometry_msgs::Point get_camera_translation( const geometry_msgs::Pose & marker_
 	// carry out the rotation
 	tf2::doTransform(marker_pose, camera_pose, rotation_transform);
 
+	double roll, pitch, yaw;
+	tf2::Matrix3x3(marker_orientation).getRPY(roll, pitch, yaw);
+	tf2::Quaternion rotation_no_yaw(roll, pitch, 0);
+
+	double roll_magnitude  = M_PI - abs(roll);
+	double pitch_magnitude = abs(pitch);
+	double how_perpendicular = roll_magnitude * pitch_magnitude;
+	if( how_perpendicular > 1 )
+	{
+		how_perpendicular = 1;
+	}
+	double normal_factor = 1 - pow(how_perpendicular, 0.6);
+	double perpendicular_factor = 1 - normal_factor;
+
+	geometry_msgs::Pose unyawed_pose;
+	tf2::Quaternion yaw_quaternion(0, 0, yaw);
+	tf2::Quaternion inverse_yaw = yaw_quaternion.inverse();
+	geometry_msgs::TransformStamped inverse_yaw_transform;
+	inverse_yaw_transform.transform.rotation = tf2::toMsg(inverse_yaw);
+	tf2::doTransform(marker_pose, unyawed_pose, inverse_yaw_transform);
+
+	// weighted average of each pose
+	camera_pose.position.x = normal_factor*unyawed_pose.position.x + perpendicular_factor*camera_pose.position.x;
+	camera_pose.position.y = normal_factor*unyawed_pose.position.y + perpendicular_factor*camera_pose.position.y;
+	camera_pose.position.z = normal_factor*unyawed_pose.position.z + perpendicular_factor*camera_pose.position.z;
+
 	// return only the translational elements of the camera's pose, as the orientation will be (w, x, y, z) ≈ (1, 0, 0, 0)
 	return camera_pose.position;
 }
