@@ -18,6 +18,9 @@ geometry_msgs/PoseWithCovarianceStamped pose
 ####### new additions for aiming the camera etc
 float32[] c                             # x,y pixel location of the marker (takes the pixel location of the marker with the lowest ID if the detection is a bundle)
 float32[] c_normalized                  # normalized [-1, 1] x,y pixel location of the marker (takes the pixel location of the marker with the lowest ID if the detection is a bundle)
-geometry_msgs/Point camera_translation  # translational position of the camera in the coordinate frame of the marker (no rotation)
+geometry_msgs/Point camera_translation_enu  # translational position of the camera in the coordinate frame of the marker (no rotation)
+float64 roll
+float64 pitch
+float64 yaw
 
 string name

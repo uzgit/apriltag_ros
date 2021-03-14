@@ -209,6 +209,16 @@ TagDetector::~TagDetector() {
   }
 }
 
+geometry_msgs::Vector3 get_rpy(const geometry_msgs::Pose & marker_pose)
+{
+	geometry_msgs::Vector3 result;
+	tf2::Quaternion marker_orientation, marker_orientation_inverse;
+	tf2::fromMsg(marker_pose.orientation, marker_orientation);
+	tf2::Matrix3x3(marker_orientation).getRPY(result.x, result.y, result.z);
+
+	return result;
+}
+
 geometry_msgs::Point get_camera_translation( const geometry_msgs::Pose & marker_pose )
 {
 	// the pose of the camera within the marker's coordinate frame
@@ -237,8 +247,9 @@ geometry_msgs::Point get_camera_translation( const geometry_msgs::Pose & marker_
 	{
 		how_perpendicular = 1;
 	}
-	double normal_factor = 1 - pow(how_perpendicular, 0.6);
-	double perpendicular_factor = 1 - normal_factor;
+//	double perpendicular_factor = pow(how_perpendicular, 9);
+	double perpendicular_factor = 2.081e-9 * exp(19.9843 * how_perpendicular);
+	double normal_factor = 1 - perpendicular_factor;
 
 	geometry_msgs::Pose unyawed_pose;
 	tf2::Quaternion yaw_quaternion(0, 0, yaw);
@@ -248,9 +259,13 @@ geometry_msgs::Point get_camera_translation( const geometry_msgs::Pose & marker_
 	tf2::doTransform(marker_pose, unyawed_pose, inverse_yaw_transform);
 
 	// weighted average of each pose
+/*
 	camera_pose.position.x = normal_factor*unyawed_pose.position.x + perpendicular_factor*camera_pose.position.x;
 	camera_pose.position.y = normal_factor*unyawed_pose.position.y + perpendicular_factor*camera_pose.position.y;
 	camera_pose.position.z = normal_factor*unyawed_pose.position.z + perpendicular_factor*camera_pose.position.z;
+*/
+	camera_pose.position.y = camera_pose.position.y;
+	camera_pose.position.z = camera_pose.position.z;
 
 	// return only the translational elements of the camera's pose, as the orientation will be (w, x, y, z) ≈ (1, 0, 0, 0)
 	return camera_pose.position;
@@ -423,7 +438,11 @@ AprilTagDetectionArray TagDetector::detectTags (
 
     tag_detection.name=standaloneDescription->frame_name();
 
-    tag_detection.camera_translation = get_camera_translation( tag_pose.pose.pose );
+    tag_detection.camera_translation_enu = get_camera_translation( tag_pose.pose.pose );
+    geometry_msgs::Vector3 buffer = get_rpy(tag_pose.pose.pose);
+    tag_detection.roll  = buffer.x;
+    tag_detection.pitch = buffer.y;
+    tag_detection.yaw   = buffer.z;
 
     tag_detection_array.detections.push_back(tag_detection);
     detection_names.push_back(standaloneDescription->frame_name());
@@ -503,7 +522,11 @@ AprilTagDetectionArray TagDetector::detectTags (
       tag_detection.c_normalized.push_back(bundle_c_normalized[0]);
       tag_detection.c_normalized.push_back(bundle_c_normalized[1]);
 
-      tag_detection.camera_translation = get_camera_translation( bundle_pose.pose.pose );
+      tag_detection.camera_translation_enu = get_camera_translation( bundle_pose.pose.pose );
+      geometry_msgs::Vector3 buffer = get_rpy(bundle_pose.pose.pose);
+      tag_detection.roll  = buffer.x;
+      tag_detection.pitch = buffer.y;
+      tag_detection.yaw   = buffer.z;
 
       tag_detection_array.detections.push_back(tag_detection);
       detection_names.push_back(bundle.name());
