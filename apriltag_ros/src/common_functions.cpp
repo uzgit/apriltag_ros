@@ -220,6 +220,53 @@ geometry_msgs::Vector3 get_rpy(const geometry_msgs::Pose & marker_pose)
 	return result;
 }
 
+geometry_msgs::Point get_camera_translation( const geometry_msgs::Pose & marker_pose_orig )
+{
+	geometry_msgs::Pose marker_pose = marker_pose_orig;
+
+	// get the marker's orientation and invert it
+	tf2::Quaternion marker_orientation, marker_orientation_inverse;
+	tf2::fromMsg(marker_pose.orientation, marker_orientation);
+	marker_orientation_inverse = marker_orientation.inverse();
+
+	// get the rotational elements in RPY form
+	double roll, pitch, yaw;
+	tf2::Matrix3x3(marker_orientation).getRPY(roll, pitch, yaw);
+
+	std::cout << "(R, P, Y) = (" << roll << ", " << pitch << ", " << yaw << ")" << std::endl;
+
+	// create a quaternion with just the marker's pitch and yaw
+//	tf2::Quaternion rotation_no_yaw(roll, pitch, 0);
+
+//	marker_pose.orientation = tf2::toMsg(rotation_no_yaw);
+
+//	tf2::Quaternion rotation_no_yaw_inverse = rotation_no_yaw.inverse();
+
+	// create a rotational transform with the inverse of the marker's orientation (no translational element)
+	geometry_msgs::TransformStamped rotation_transform;
+	rotation_transform.transform.rotation = tf2::toMsg(marker_orientation_inverse);
+//	rotation_transform.transform.rotation = tf2::toMsg(rotation_no_yaw_inverse);
+
+	// the pose of the camera within the marker's coordinate frame
+	geometry_msgs::Pose camera_pose;
+
+	// carry out the rotation
+	tf2::doTransform(marker_pose, camera_pose, rotation_transform);
+
+	tf2::Quaternion yaw_quaternion;
+	yaw_quaternion.setRPY(0, 0, -yaw);
+	geometry_msgs::TransformStamped transform2;
+	transform2.transform.rotation = tf2::toMsg(yaw_quaternion);
+
+	geometry_msgs::Pose buffer;
+	tf2::doTransform(camera_pose, buffer, transform2);
+
+	// return only the translational elements of the camera's pose, as the orientation will be (w, x, y, z) ≈ (1, 0, 0, 0)
+//	return camera_pose.position;
+	return buffer.position;
+}
+
+/*
 geometry_msgs::Point get_camera_translation( const geometry_msgs::Pose & marker_pose )
 {
 	// the pose of the camera within the marker's coordinate frame
@@ -259,18 +306,23 @@ geometry_msgs::Point get_camera_translation( const geometry_msgs::Pose & marker_
 	inverse_yaw_transform.transform.rotation = tf2::toMsg(inverse_yaw);
 	tf2::doTransform(marker_pose, unyawed_pose, inverse_yaw_transform);
 
+	geometry_msgs::TransformStamped rotation_no_yaw_transform;
+	rotation_no_yaw_transform.transform.rotation = tf2::toMsg(rotation_no_yaw);
+	geometry_msgs::Pose buffer;
+	tf2::doTransform(marker_pose, buffer, rotation_no_yaw_transform);
+
 	// weighted average of each pose
-/*
-	camera_pose.position.x = normal_factor*unyawed_pose.position.x + perpendicular_factor*camera_pose.position.x;
-	camera_pose.position.y = normal_factor*unyawed_pose.position.y + perpendicular_factor*camera_pose.position.y;
-	camera_pose.position.z = normal_factor*unyawed_pose.position.z + perpendicular_factor*camera_pose.position.z;
-*/
+//	camera_pose.position.x = normal_factor*unyawed_pose.position.x + perpendicular_factor*camera_pose.position.x;
+//	camera_pose.position.y = normal_factor*unyawed_pose.position.y + perpendicular_factor*camera_pose.position.y;
+//	camera_pose.position.z = normal_factor*unyawed_pose.position.z + perpendicular_factor*camera_pose.position.z;
 	camera_pose.position.y = camera_pose.position.y;
 	camera_pose.position.z = camera_pose.position.z;
 
 	// return only the translational elements of the camera's pose, as the orientation will be (w, x, y, z) ≈ (1, 0, 0, 0)
-	return camera_pose.position;
+//	return camera_pose.position;
+	return buffer.position;
 }
+*/
 
 AprilTagDetectionArray TagDetector::detectTags (
     const cv_bridge::CvImagePtr& image,
