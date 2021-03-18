@@ -22,7 +22,11 @@ standalone_tags:
     {id: 0, size: 0.008, name: ZERO},
     {id: 1, size: 0.04, name: ONE},
     {id: 2, size: 0.20, name: TWO},
-    {id: 3, size: 1.00, name: THREE}
+    {id: 3, size: 1.00, name: THREE},
+    {id: 4, size: 0.008, name: FOUR},
+    {id: 5, size: 0.04, name: FIVE},
+    {id: 6, size: 0.20, name: SIX},
+    {id: 7, size: 1.00, name: SEVEN}
   ]
 # ## Tag bundle definitions
 # ### Remarks
@@ -48,7 +52,7 @@ standalone_tags:
 tag_bundles:
   [
      {
-       name: 'landing_pad',
+       name: 'landing_pad_1',
        layout:
          [
            {id: 0, size: 0.008, x:  0.00, y:  0.00, z: 0.00, qw: 1.00, qx: 0.00, qy: 0.00, qz: 0.00},
@@ -57,4 +61,16 @@ tag_bundles:
            {id: 3, size: 1.00, x:  0.00, y:  0.00, z: 0.00, qw: 1.00, qx: 0.00, qy: 0.00, qz: 0.00}
          ]
      },
+     {
+       name: 'landing_pad_2',
+       layout:
+         [
+           {id: 4, size: 0.008, x:  0.00, y:  0.00, z: 0.00, qw: 1.00, qx: 0.00, qy: 0.00, qz: 0.00},
+           {id: 5, size: 0.04, x:  0.00, y:  0.00, z: 0.00, qw: 1.00, qx: 0.00, qy: 0.00, qz: 0.00},
+           {id: 6, size: 0.20, x:  0.00, y:  0.00, z: 0.00, qw: 1.00, qx: 0.00, qy: 0.00, qz: 0.00},
+           {id: 7, size: 1.00, x:  0.00, y:  0.00, z: 0.00, qw: 1.00, qx: 0.00, qy: 0.00, qz: 0.00}
+         ]
+     }
   ]
+
+
