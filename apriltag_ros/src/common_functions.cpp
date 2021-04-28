@@ -42,6 +42,7 @@
 #include "tag25h9.h"
 #include "tag16h5.h"
 #include "tagCustom48h12.h"
+#include "tagCustom24h10.h"
 #include "tagCircle21h7.h"
 #include "tagCircle49h12.h"
 
@@ -134,6 +135,10 @@ TagDetector::TagDetector(ros::NodeHandle pnh) :
   {
     tf_ = tagCustom48h12_create();
   }
+  else if (family_ == "tagCustom24h10")
+  {
+    tf_ = tagCustom24h10_create();
+  }
   else if (family_ == "tagCircle21h7")
   {
     tf_ = tagCircle21h7_create();
@@ -199,6 +204,10 @@ TagDetector::~TagDetector() {
   else if (family_ == "tagCustom48h12")
   {
     tagCustom48h12_destroy(tf_);
+  }
+  else if (family_ == "tagCustom24h10")
+  {
+    tagCustom24h10_destroy(tf_);
   }
   else if (family_ == "tagCircle21h7")
   {
