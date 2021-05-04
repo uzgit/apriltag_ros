@@ -474,16 +474,28 @@ AprilTagDetectionArray TagDetector::detectTags (
       tag_detection.id = bundle.bundleIds();
       tag_detection.size = bundle.bundleSizes();
 
-
       tag_detection.name = bundle.name();
 
       tag_detection.c.clear();
       tag_detection.c_normalized.clear();
 
-      int min_id = -1;
+//      int min_id = -1;
       double bundle_c[2];
-      double bundle_c_normalized[2];
+      bundle_c[0] = 0;
+      bundle_c[1] = 0;
+	for(int i = 0; i < 4; i ++)
+	{
+	    bundle_c[0] += bundleImagePoints[bundleName][i].x;
+	    bundle_c[1] += bundleImagePoints[bundleName][i].y;
+	}
+	bundle_c[0] /= 4;
+	bundle_c[1] /= 4;
 
+	double bundle_c_normalized[2];
+	bundle_c_normalized[0] = (bundle_c[0] - half_resolution_x) / half_resolution_x;
+	bundle_c_normalized[1] = (bundle_c[1] - half_resolution_y) / half_resolution_y;
+
+/*
       for( const AprilTagDetection& previous_detection : tag_detection_array.detections )
       {
 	      int ii = 0;
@@ -509,7 +521,7 @@ AprilTagDetectionArray TagDetector::detectTags (
 	      }
 	      
       }
-
+*/
       tag_detection.c.push_back(bundle_c[0]);
       tag_detection.c.push_back(bundle_c[1]);
       
