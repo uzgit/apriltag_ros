@@ -17,12 +17,12 @@
 #     {id: ID, size: SIZE, name: NAME},
 #     ...
 #   ]
-standalone_tags:
-  [
+#standalone_tags:
+#  [
 #    {id: 0, size: 0.0041, name: ZERO},
 #    {id: 1, size: 0.0290, name: ONE},
-    {id: 2, size: 0.1775, name: TWO}
-  ]
+#    {id: 2, size: 0.1775, name: TWO}
+#  ]
 # ## Tag bundle definitions
 # ### Remarks
 #
@@ -44,15 +44,15 @@ standalone_tags:
 #     },
 #     ...
 #   ]
-#tag_bundles:
-#  [
-#     {
-#       name: 'landing_pad_1',
-#       layout:
-#         [
-#           {id: 0, size: 0.0041, x:  0.00, y:  0.00, z: 0.00, qw: 1.00, qx: 0.00, qy: 0.00, qz: 0.00},
-#           {id: 1, size: 0.0290, x:  0.00, y:  0.00, z: 0.00, qw: 1.00, qx: 0.00, qy: 0.00, qz: 0.00},
-#           {id: 2, size: 0.1275, x:  0.00, y:  0.00, z: 0.00, qw: 1.00, qx: 0.00, qy: 0.00, qz: 0.00}
-#         ]
-#     }
-#  ]
+tag_bundles:
+  [
+     {
+       name: 'landing_pad_1',
+       layout:
+         [
+           {id: 0, size: 0.0075, x:  0.00, y:  0.00, z: 0.00, qw: 1.00, qx: 0.00, qy: 0.00, qz: 0.00},
+           {id: 1, size: 0.0760, x:  0.00, y:  0.00, z: 0.00, qw: 1.00, qx: 0.00, qy: 0.00, qz: 0.00},
+           {id: 2, size: 0.1775, x:  0.00, y:  0.00, z: 0.00, qw: 1.00, qx: 0.00, qy: 0.00, qz: 0.00}
+         ]
+     }
+  ]
